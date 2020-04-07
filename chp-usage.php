@@ -22,7 +22,10 @@ if ( ! class_exists( 'MDT\CHP\Chp_Usage' ) ) :
 		 * Initial load.
 		 */
 		public static function load() {
-			require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+			if ( !class_exists('Mustache_Autoloader' ) ) {
+				require_once __DIR__ . '/lib/mustache/src/Mustache/Autoloader.php';
+				Mustache_Autoloader::register();
+			}
 			require_once plugin_dir_path( __FILE__ ) . 'class-settings.php';
 			require_once plugin_dir_path( __FILE__ ) . 'class-hooks.php';
 			require_once plugin_dir_path( __FILE__ ) . 'class-api.php';

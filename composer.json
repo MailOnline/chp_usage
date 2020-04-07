@@ -3,8 +3,17 @@
   "description": "Connect to CHP and push the usage stats back to their systems",
   "homepage"   : "https://github.com/MailOnline/chp-usage/",
   "type"       : "wordpress-plugin",
-  "license"    : "GPL-2.0+",
+  "license": "proprietary",
   "require": {
+    "mnsami/composer-custom-directory-installer": "1.1.*",
     "mustache/mustache": "^2.13"
+  },
+  "minimum-stability": "stable",
+  "extra": {
+    "installer-paths": {
+      "lib/{$name}/": [
+        "mustache/mustache"
+      ]
+    }
   }
 }
