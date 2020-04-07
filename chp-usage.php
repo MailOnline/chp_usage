@@ -13,24 +13,24 @@ namespace MDT\CHP;
 
 if ( ! class_exists( 'MDT\CHP\Chp_Usage' ) ) :
 
-    /**
-     * Class Chp_Usage
-     */
-    class Chp_Usage {
+	/**
+	 * Class Chp_Usage
+	 */
+	class Chp_Usage {
 
-        /**
-         * Initial load.
-         */
-        public static function load() {
-            require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
-            require_once plugin_dir_path( __FILE__ ) . 'class-settings.php';
-            require_once plugin_dir_path( __FILE__ ) . 'class-hooks.php';
-            require_once plugin_dir_path( __FILE__ ) . 'class-api.php';
-        }
+		/**
+		 * Initial load.
+		 */
+		public static function load() {
+			require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+			require_once plugin_dir_path( __FILE__ ) . 'class-settings.php';
+			require_once plugin_dir_path( __FILE__ ) . 'class-hooks.php';
+			require_once plugin_dir_path( __FILE__ ) . 'class-api.php';
+		}
 
-    }
+	}
 
-    Chp_Usage::load();
+	Chp_Usage::load();
 
 endif;
 

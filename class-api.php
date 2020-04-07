@@ -49,6 +49,7 @@ class API {
 	 * @see https://developer.wordpress.org/rest-api/reference/media/#create-a-media-item
 	 *
 	 * @param \WP_REST_Request $request
+	 *
 	 * @return array
 	 */
 	function callback( \WP_REST_Request $request ) {

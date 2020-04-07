@@ -11,10 +11,10 @@ namespace MDT\CHP;
  */
 class Hooks {
 
-	const CHP_CRON       = 'retry_chp_call';
+	const CHP_CRON = 'retry_chp_call';
 	const CHP_DAILY_CRON = 'daily_retry_chp_calls';
-	const SLACK_CHANNEL  = '#chp-notifications';
-	const MAX_RETRIES    = 4;
+	const SLACK_CHANNEL = '#chp-notifications';
+	const MAX_RETRIES = 4;
 
 	private $chp_endpoint, $auth_token, $slack_url, $mustache;
 
@@ -26,29 +26,29 @@ class Hooks {
 		$this->auth_token   = base64_encode( get_option( Settings::CHP_TOKEN ) . ':' );
 		$this->slack_url    = get_option( Settings::SLACK_APP_URL );
 
-        // Get the mustache template set in settings
-        $template_xml = get_option( Settings::CHP_XML_TEMPLATE );
-        if ( !$template_xml ) {
-            return;
-        }
+		// Get the mustache template set in settings
+		$template_xml = get_option( Settings::CHP_XML_TEMPLATE );
+		if ( ! $template_xml ) {
+			return;
+		}
 
 		$this->mustache = new \Mustache_Engine(
 			[
-                'partials' => [
-                    'template_xml' => $template_xml
-                ]
+				'partials' => [
+					'template_xml' => $template_xml
+				]
 			]
 		);
 
-        if( array_key_exists( 'wpcom_vip_passthrough_cron_to_jobs' , $GLOBALS['wp_filter']) ) {
-            add_filter( 'wpcom_vip_passthrough_cron_to_jobs', [ $this, 'passthrough_to_jobs' ] );
-        }
+		if ( array_key_exists( 'wpcom_vip_passthrough_cron_to_jobs', $GLOBALS['wp_filter'] ) ) {
+			add_filter( 'wpcom_vip_passthrough_cron_to_jobs', [ $this, 'passthrough_to_jobs' ] );
+		}
 
 		// We keep it out from the conditional above to clean up the cron queque when a chp endpoint previously set is removed from settings.
 		add_action( self::CHP_CRON, [ $this, 'send_usage_to_chp' ], 10, 1 );
 
 		if ( $this->chp_endpoint ) {
-			add_action( 'transition_post_status', [ $this,  'save_post_action' ], 200, 3 );
+			add_action( 'transition_post_status', [ $this, 'save_post_action' ], 200, 3 );
 
 			// set a daily cronjob to search for posts with failed chp calls and retry
 			add_action( 'admin_init', [ $this, 'activate_chp_daily_cron' ] );
@@ -98,11 +98,10 @@ class Hooks {
 	 * Handle the call to the CHP endpoint
 	 *
 	 * @param $post_id
-	 * @param bool    $daily
+	 * @param bool $daily
 	 */
 	public function send_usage_to_chp( $post_id, $daily = false ) {
 
-	    error_log('send_usage_to_chp' );
 		// Skip the chp call if the chp endpoint is not set
 		if ( ! $this->chp_endpoint ) {
 			return;
@@ -139,7 +138,7 @@ class Hooks {
 
 				$safe_data = self::format_data( (string) $chp_images_ids[ $chp_image->ID ]['asset_id'], $post ); // Structure data in a mustache friendly format
 
-				$xml_string = $this->mustache->render('{{> template_xml }}', $safe_data );
+				$xml_string = $this->mustache->render( '{{> template_xml }}', $safe_data );
 
 				echo $xml_string;
 				die();
@@ -258,7 +257,7 @@ class Hooks {
 				libxml_use_internal_errors( true );
 				$chp_xml = simplexml_load_string( $chp_response );
 				if ( false !== $chp_xml && isset( $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0] ) ) {
-					$asset_id = $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0];
+					$asset_id                                = $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0];
 					$chp_images_ids[ $image_id ]['asset_id'] = (string) $asset_id;
 				}
 			}
@@ -302,7 +301,7 @@ class Hooks {
 
 		$post_url = get_permalink( $post->ID );
 
-		$message  = sprintf( 'CHP error: <%s|%s> - %s - IMG ID: %d ', trim( $post_url ), trim( $post->post_title ), $cph_error_log, $image_id );
+		$message = sprintf( 'CHP error: <%s|%s> - %s - IMG ID: %d ', trim( $post_url ), trim( $post->post_title ), $cph_error_log, $image_id );
 		$message .= wp_json_encode( $response );
 
 		$payload = array(
@@ -349,7 +348,7 @@ class Hooks {
 			}
 		}
 
-        return [
+		return [
 			'asset_id'      => strtoupper( $asset_id ),
 			'post_id'       => $post->ID,
 			'post_url'      => get_permalink( $post->ID ),
@@ -373,12 +372,13 @@ class Hooks {
 		return date( 'Y-m-d\TH:i:s.000\Z', strtotime( $post_date ) );
 	}
 
-    /**
-     * Returns post authors.
-     *
-     * @param $post_id
-     * @return array
-     */
+	/**
+	 * Returns post authors.
+	 *
+	 * @param $post_id
+	 *
+	 * @return array
+	 */
 	function get_authors( $post_id ) {
 
 		$authors = [];
@@ -427,7 +427,7 @@ class Hooks {
 		preg_match_all( '/ids="(.*)"/m', $post->post_content, $gal_matches );
 
 		if ( is_array( $gal_matches[1] ) && ! empty( $gal_matches[1] ) ) {
-			foreach ( $gal_matches[1]  as $gal_match ) {
+			foreach ( $gal_matches[1] as $gal_match ) {
 				$gal_ids = explode( ',', $gal_match );
 				$img_ids = array_merge( $gal_ids, $img_ids );
 			}
@@ -453,11 +453,12 @@ class Hooks {
 
 		if ( ! empty( $img_ids ) ) {
 			$args = array(
-				'post__in'    => $img_ids,
-				'post_type'   => 'attachment',
-				'post_status' => 'any',
-				'author__in'  => $chp_users, // Retrieve only images uploaded by specific users via CHP (e.g. chpwpprod)
-                'ignore_sticky_posts' => 1
+				'post__in'            => $img_ids,
+				'post_type'           => 'attachment',
+				'post_status'         => 'any',
+				'author__in'          => $chp_users,
+				// Retrieve only images uploaded by specific users via CHP (e.g. chpwpprod)
+				'ignore_sticky_posts' => 1
 			);
 
 			$query = new \WP_Query( $args );
