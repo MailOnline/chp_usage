@@ -1,0 +1,35 @@
+# To use these rules, run the following two commands
+# pip install pre-commit
+# pre-commit install
+
+exclude: ^[plugins]
+fail_fast: false"
+repos:
+-   repo: meta
+    hooks:
+    -   id: check-hooks-apply
+    -   id: check-useless-excludes
+-   repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v2.2.3
+    hooks:
+    -   id: check-json
+    -   id: check-yaml
+- repo: git@github.com:digitalpulp/pre-commit-php.git
+  rev: 1.3.0
+  hooks:
+  - id: php-lint
+  - id: php-cs
+    exclude: ^[plugins]
+    args: [--standard=WordPress-VIP-Go --config-set ignore_warnings_on_exit 1 -pv]
+  - id: php-cbf
+    exclude: ^[plugins]
+    args: [--standard=WordPress-VIP-Go -pv]
+-   repo: git@github.com:pre-commit/mirrors-scss-lint
+    rev: v0.58.0
+    hooks:
+    -   id: scss-lint
+-   repo: git@github.com:pre-commit/mirrors-jshint
+    rev: v2.10.2
+    hooks:
+    -   id: jshint
+        args: []

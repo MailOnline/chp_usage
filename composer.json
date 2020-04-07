@@ -1,0 +1,10 @@
+{
+  "name"       : "mdt/chp-usage",
+  "description": "Connect to CHP and push the usage stats back to their systems",
+  "homepage"   : "https://github.com/MailOnline/chp-usage/",
+  "type"       : "wordpress-plugin",
+  "license"    : "GPL-2.0+",
+  "require": {
+    "mustache/mustache": "^2.13"
+  }
+}
