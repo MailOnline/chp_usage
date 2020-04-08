@@ -140,9 +140,6 @@ class Hooks {
 
 				$xml_string = $this->mustache->render( '{{> template_xml }}', $safe_data );
 
-				echo $xml_string;
-				die();
-
 				// Perform a second request to post the image usage
 				$response = wp_safe_remote_post(
 					$this->chp_endpoint . 'children',
