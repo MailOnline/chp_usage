@@ -24,6 +24,7 @@ class Settings {
 	function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_page' ] );
 		add_action( 'admin_init', [ $this, 'register_fields' ] );
+		add_action( 'init', [ $this, 'chp_global_id_meta_init' ] );
 	}
 
 	/**
@@ -122,6 +123,18 @@ class Settings {
 		if ( $args[1] ) {
 			printf( '<small class="admin-note">%s</small>', esc_html( $args[1] ) );
 		}
+	}
+
+	public static function chp_global_id_meta_init() {
+		register_meta(
+			'post',
+			'chp_global_id',
+			[
+				'type'              => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+			]
+		);
 	}
 
 }
