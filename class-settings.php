@@ -25,6 +25,7 @@ class Settings {
 		add_action( 'admin_menu', [ $this, 'add_page' ] );
 		add_action( 'admin_init', [ $this, 'register_fields' ] );
 		add_action( 'init', [ $this, 'chp_global_id_meta_init' ] );
+		add_action( 'rest_after_insert_attachment', [ __CLASS__, 'after_rest_insert' ], 10, 2 );
 	}
 
 	/**
@@ -135,6 +136,20 @@ class Settings {
 				'single'            => true,
 			]
 		);
+	}
+
+	/**
+	 * Fires after an attachment is created or updated via the REST API.
+	 * Workaround to store the chp_global_id custom meta without doing a second call
+	 *
+	 * @param object          $post      Inserted Post object (not a WP_Post object).
+	 * @param WP_REST_Request $request   Request object.
+	 */
+	public static function after_rest_insert( $post, $request ) {
+
+		if ( isset( $request['chp_global_id'] ) ) {
+			add_post_meta( $post->ID, 'chp_global_id', $request['chp_global_id'], true );
+		}
 	}
 
 }
