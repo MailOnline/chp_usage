@@ -75,6 +75,7 @@ class Settings {
 		self::register_setting( self::CHP_USERS, 'CHP users', 'IDs Comma separated used to detect CHP images.' );
 		self::register_setting( self::CHP_XML_TEMPLATE, 'CHP XML TEMPLATE', '', 'field_textarea' );
 		self::register_setting( self::SLACK_APP_URL, 'SLACK APP URL' );
+		self::register_setting( 'ip_address', 'IP address', '', 'display_the_ip' );
 
 	}
 
@@ -131,19 +132,30 @@ class Settings {
 			'post',
 			'chp_global_id',
 			[
-				'type'              => 'string',
-				'show_in_rest'      => true,
-				'single'            => true,
+				'type'         => 'string',
+				'show_in_rest' => true,
+				'single'       => true,
 			]
 		);
+	}
+
+	/**
+	 * Display the IP address
+	 */
+	public static function display_the_ip() {
+		$curl     = new \WP_Http_Curl();
+		$response = $curl->request( 'https://ifconfig.me/' );
+		if ( ! is_wp_error( $response ) && isset ( $response["body"] ) ) {
+			echo esc_html( $response["body"] );
+		}
 	}
 
 	/**
 	 * Fires after an attachment is created or updated via the REST API.
 	 * Workaround to store the chp_global_id custom meta without doing a second call
 	 *
-	 * @param object          $post      Inserted Post object (not a WP_Post object).
-	 * @param WP_REST_Request $request   Request object.
+	 * @param object $post Inserted Post object (not a WP_Post object).
+	 * @param WP_REST_Request $request Request object.
 	 */
 	public static function after_rest_insert( $post, $request ) {
 
