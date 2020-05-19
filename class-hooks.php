@@ -114,6 +114,8 @@ class Hooks {
 		$chp_images     = self::get_chp_images( $post );
 		$chp_images_ids = $this->get_images_meta( $post->ID );
 
+		error_log ('chp_images_ids: ' . json_encode( $chp_images_ids ) );
+
 		if ( ! $daily ) { // we don't want to skip calls for daily cron tasks
 			$chp_retries = isset( $chp_images_ids['chp_retries'] ) ? $chp_images_ids['chp_retries'] : self::MAX_RETRIES;
 			if ( $chp_retries <= 0 ) { // skip the CHP call if we've reached the max amount of allowed retries
@@ -175,6 +177,8 @@ class Hooks {
 			$chp_images_ids[ $chp_image->ID ]['status'] = wp_remote_retrieve_response_code( $response );
 		}
 
+		error_log ( 'chp_images_ids_after_post: ' . json_encode( $chp_images_ids ) );
+
 		if ( $chp_errors ) { // If something went wrong with one of the CHP calls retry in 30 minutes
 			$chp_images_ids['errors'] = $chp_errors;
 
@@ -202,7 +206,11 @@ class Hooks {
 	 */
 	public function get_chp_asset_id( $image_id, $chp_images_ids ) {
 
+
+		error_log ('get_chp_asset_id' );
+
 		if ( ! isset( $chp_images_ids[ $image_id ]['asset_id'] ) ) {
+
 			/*
 			 * CHP image names follow some rules (e.g. PRI_69815710.jpg, SEI_66230596-bbcf.jpg or SEC_66232132.jpg )
 			 * A few manipulations are needed in order to get the CHP ID
@@ -212,6 +220,8 @@ class Hooks {
 
 			// the XURN_ID we send to CHP must have a specific format (e.g. PRI*69815710, SEI*66230596 )
 			$xurn_id = str_replace( '_', '*', $filename_exp_hyphen[0] );
+
+			error_log ( 'xurn_id: ' . $xurn_id );
 
 			/*
 			 * this parameter is different depending on the image type.
@@ -233,6 +243,8 @@ class Hooks {
 
 			$chp_query = $this->chp_endpoint . $query;
 
+			error_log ( 'chp query: ' . $chp_query );
+
 			$response = wp_safe_remote_get(
 				$chp_query,
 				array(
@@ -245,9 +257,12 @@ class Hooks {
 
 			if ( is_wp_error( $response ) ) {
 				$chp_images_ids[ $image_id ]['wp_error'] = $response;
+				error_log ( 'wp_error: ' . json_encode( $response ) );
 			}
 
 			$chp_images_ids[ $image_id ]['xurn_id'][ $xurn_id ]['status'] = wp_remote_retrieve_response_code( $response );
+
+			error_log ( 'wp_response_code: ' . wp_remote_retrieve_response_code( $response ) );
 
 			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 				$chp_response = wp_remote_retrieve_body( $response );
@@ -259,6 +274,8 @@ class Hooks {
 				}
 			}
 		}
+
+		error_log ( 'chp_images_ids: ' . json_encode( $chp_images_ids ) );
 
 		return $chp_images_ids;
 	}
@@ -408,6 +425,8 @@ class Hooks {
 	 */
 	public function get_chp_images( $post ) {
 
+		error_log ('get_chp_images' );
+
 		$img_ids    = [];
 		$chp_images = [];
 
@@ -415,6 +434,8 @@ class Hooks {
 
 		// Single images IDs
 		preg_match_all( '/wp-image-(\d+)/m', $post->post_content, $imgs_matches );
+
+		error_log ('imgs_matches: ' . json_encode( $imgs_matches ) );
 
 		if ( is_array( $imgs_matches[1] ) && ! empty( $imgs_matches[1] ) ) {
 			$img_ids = $imgs_matches[1];
@@ -448,6 +469,9 @@ class Hooks {
 			$img_ids[] = $lead_img;
 		}
 
+		error_log ('img_ids: ' . json_encode( $img_ids ) );
+		error_log ('chp_users: ' . json_encode( $chp_users ) );
+
 		if ( ! empty( $img_ids ) ) {
 			$args = array(
 				'post__in'            => $img_ids,
@@ -458,12 +482,16 @@ class Hooks {
 				'ignore_sticky_posts' => 1
 			);
 
+			error_log ('wp_query: ' . json_encode( $args ) );
+
 			$query = new \WP_Query( $args );
 
 			if ( $query->have_posts() ) {
 				$chp_images = $query->posts;
 			}
 		}
+
+		error_log ('chp_images: ' . json_encode( $chp_images ) );
 
 		return $chp_images;
 	}
