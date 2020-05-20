@@ -12,7 +12,7 @@ namespace MDT\CHP;
  */
 class API {
 
-	const API_NAMESPACE = 'chp-usage';
+	const API_NAMESPACE = 'media-chp';
 
 	/**
 	 * API constructor.
