@@ -370,7 +370,7 @@ class Hooks {
 		$authors_names = [];
 		foreach ( $authors as $author ) {
 
-			error_Log( 'authors: ' . json_encode( $author ) );
+			error_Log( 'author: ' . json_encode( $author ) );
 
 			if ( is_array( $author ) && isset( $author['display_name'] ) ) {
 				$authors_names[] = $author['display_name'];
@@ -415,6 +415,7 @@ class Hooks {
 
 		if ( function_exists( 'get_coauthors' ) ) {
 			$coauthors = get_coauthors( $post_id );
+			error_log( json_encode( 'get_coauthors:' . $coauthors ) );
 			foreach ( $coauthors as $author ) {
 				if ( array_key_exists( 'data', $author ) ) {
 					$data                  = [];
