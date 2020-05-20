@@ -415,7 +415,7 @@ class Hooks {
 
 		if ( function_exists( 'get_coauthors' ) ) {
 			$coauthors = get_coauthors( $post_id );
-			error_log( json_encode( 'get_coauthors:' . $coauthors ) );
+			error_log( json_encode( 'get_coauthors:' . json_encode( $coauthors ) ) );
 			foreach ( $coauthors as $author ) {
 				if ( array_key_exists( 'data', $author ) ) {
 					$data                  = [];
