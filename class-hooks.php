@@ -182,6 +182,7 @@ class Hooks {
 				unset( $chp_images_ids[ $chp_image->ID ]['error'] );
 			}
 
+			error_log ( 'chp_post_xml: ' . wp_remote_retrieve_body( $response ) );
 			$chp_images_ids[ $chp_image->ID ]['status'] = wp_remote_retrieve_response_code( $response );
 		}
 
@@ -274,6 +275,7 @@ class Hooks {
 
 			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 				$chp_response = wp_remote_retrieve_body( $response );
+				error_log ( 'chp_get_xml: ' . $chp_response );
 				libxml_use_internal_errors( true );
 				$chp_xml = simplexml_load_string( $chp_response );
 				if ( false !== $chp_xml && isset( $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0] ) ) {
