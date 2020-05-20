@@ -365,11 +365,17 @@ class Hooks {
 
 		$authors = self::get_authors( $post->ID );
 
+		error_Log( 'authors: ' . json_encode( $authors ) );
+
 		$authors_names = [];
 		foreach ( $authors as $author ) {
-			if ( isset( $author['display_name'] ) ) {
+
+			error_Log( 'author: ' . json_encode( $author ) );
+
+			if ( is_array( $author ) && isset( $author['display_name'] ) ) {
 				$authors_names[] = $author['display_name'];
 			}
+
 		}
 
 		return [
@@ -409,6 +415,7 @@ class Hooks {
 
 		if ( function_exists( 'get_coauthors' ) ) {
 			$coauthors = get_coauthors( $post_id );
+			error_log( json_encode( 'get_coauthors:' . json_encode( $coauthors ) ) );
 			foreach ( $coauthors as $author ) {
 				if ( array_key_exists( 'data', $author ) ) {
 					$data                  = [];
