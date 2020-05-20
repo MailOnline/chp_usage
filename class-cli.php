@@ -24,7 +24,8 @@ class CHP_WP_CLI extends WPCOM_VIP_CLI_Command {
 		$assoc_args = wp_parse_args( $assoc_args, $defaults );
 		if ( $assoc_args['post_id'] ) {
 			WP_CLI::line( "Send the chp usage for post_id: " . esc_html( $assoc_args['post_id'] ) );
-			$chp_hooks->send_usage_to_chp( $assoc_args['post_id'] );
+			$response = $chp_hooks->send_usage_to_chp( $assoc_args['post_id'] );
+			WP_CLI::line( json_encode( $response ) );
         } else {
 			WP_CLI::line( "Please set a valid post_id" );
         }

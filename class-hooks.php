@@ -99,13 +99,10 @@ class Hooks {
 	 *
 	 * @param $post_id
 	 * @param bool $daily
+	 *
+	 * @return array|mixed|void
 	 */
 	public function send_usage_to_chp( $post_id, $daily = false ) {
-
-		error_log ("send_usage_to_chp" );
-		error_log ("chp_endpoint $this->chp_endpoint" );
-		error_log ("chp_endpoint $this->auth_token" );
-
 		// Skip the chp call if the chp endpoint is not set
 		if ( ! $this->chp_endpoint ) {
 			return;
@@ -115,14 +112,12 @@ class Hooks {
 
 		$chp_errors = 0;
 
-		if ( ! is_object( $post )  ) {
+		if ( ! is_object( $post ) ) {
 			return;
 		}
 
 		$chp_images     = self::get_chp_images( $post );
 		$chp_images_ids = $this->get_images_meta( $post->ID );
-
-		error_log ('chp_images_ids: ' . json_encode( $chp_images_ids ) );
 
 		if ( ! $daily ) { // we don't want to skip calls for daily cron tasks
 			$chp_retries = isset( $chp_images_ids['chp_retries'] ) ? $chp_images_ids['chp_retries'] : self::MAX_RETRIES;
@@ -182,11 +177,8 @@ class Hooks {
 				unset( $chp_images_ids[ $chp_image->ID ]['error'] );
 			}
 
-			error_log ( 'chp_post_xml: ' . wp_remote_retrieve_body( $response ) );
 			$chp_images_ids[ $chp_image->ID ]['status'] = wp_remote_retrieve_response_code( $response );
 		}
-
-		error_log ( 'chp_images_ids_after_post: ' . json_encode( $chp_images_ids ) );
 
 		if ( $chp_errors ) { // If something went wrong with one of the CHP calls retry in 30 minutes
 			$chp_images_ids['errors'] = $chp_errors;
@@ -203,6 +195,8 @@ class Hooks {
 		}
 
 		update_post_meta( $post->ID, 'chp_images_ids', $chp_images_ids );
+
+		return $chp_images_ids;
 	}
 
 	/**
@@ -215,9 +209,6 @@ class Hooks {
 	 */
 	public function get_chp_asset_id( $image_id, $chp_images_ids ) {
 
-
-		error_log ('get_chp_asset_id' );
-
 		if ( ! isset( $chp_images_ids[ $image_id ]['asset_id'] ) ) {
 
 			/*
@@ -229,8 +220,6 @@ class Hooks {
 
 			// the XURN_ID we send to CHP must have a specific format (e.g. PRI*69815710, SEI*66230596 )
 			$xurn_id = str_replace( '_', '*', $filename_exp_hyphen[0] );
-
-			error_log ( 'xurn_id: ' . $xurn_id );
 
 			/*
 			 * this parameter is different depending on the image type.
@@ -252,8 +241,6 @@ class Hooks {
 
 			$chp_query = $this->chp_endpoint . $query;
 
-			error_log ( 'chp query: ' . $chp_query );
-
 			$response = wp_safe_remote_get(
 				$chp_query,
 				array(
@@ -266,16 +253,12 @@ class Hooks {
 
 			if ( is_wp_error( $response ) ) {
 				$chp_images_ids[ $image_id ]['wp_error'] = $response;
-				error_log ( 'wp_error: ' . json_encode( $response ) );
 			}
 
 			$chp_images_ids[ $image_id ]['xurn_id'][ $xurn_id ]['status'] = wp_remote_retrieve_response_code( $response );
 
-			error_log ( 'wp_response_code: ' . wp_remote_retrieve_response_code( $response ) );
-
 			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 				$chp_response = wp_remote_retrieve_body( $response );
-				error_log ( 'chp_get_xml: ' . $chp_response );
 				libxml_use_internal_errors( true );
 				$chp_xml = simplexml_load_string( $chp_response );
 				if ( false !== $chp_xml && isset( $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0] ) ) {
@@ -284,8 +267,6 @@ class Hooks {
 				}
 			}
 		}
-
-		error_log ( 'chp_images_ids: ' . json_encode( $chp_images_ids ) );
 
 		return $chp_images_ids;
 	}
@@ -365,15 +346,11 @@ class Hooks {
 
 		$authors = self::get_authors( $post->ID );
 
-		error_Log( 'authors: ' . json_encode( $authors ) );
-
 		$authors_names = [];
 		foreach ( $authors as $author ) {
 
-			error_Log( 'author: ' . json_encode( $author ) );
-
-			if ( is_array( $author ) && isset( $author['display_name'] ) ) {
-				$authors_names[] = $author['display_name'];
+			if ( isset( $author->display_name ) ) {
+				$authors_names[] = $author->display_name;
 			}
 
 		}
@@ -415,15 +392,14 @@ class Hooks {
 
 		if ( function_exists( 'get_coauthors' ) ) {
 			$coauthors = get_coauthors( $post_id );
-			error_log( json_encode( 'get_coauthors:' . json_encode( $coauthors ) ) );
 			foreach ( $coauthors as $author ) {
 				if ( array_key_exists( 'data', $author ) ) {
-					$data                  = [];
-					$data['ID']            = $author->data->ID;
-					$data['display_name']  = $author->data->display_name;
-					$data['user_nicename'] = $author->data->user_nicename;
-					$data['type']          = $author->data->type;
-					$authors[]             = $data;
+					$data = new \stdClass();
+					$data->ID            = $author->data->ID;
+					$data->display_name  = $author->data->display_name;
+					$data->user_nicename = $author->data->user_nicename;
+					$data->type          = $author->data->type;
+					$authors[]           = $data;
 				} else {
 					$authors[] = $author;
 				}
@@ -442,8 +418,6 @@ class Hooks {
 	 */
 	public function get_chp_images( $post ) {
 
-		error_log ('get_chp_images' );
-
 		$img_ids    = [];
 		$chp_images = [];
 
@@ -451,8 +425,6 @@ class Hooks {
 
 		// Single images IDs
 		preg_match_all( '/wp-image-(\d+)/m', $post->post_content, $imgs_matches );
-
-		error_log ('imgs_matches: ' . json_encode( $imgs_matches ) );
 
 		if ( is_array( $imgs_matches[1] ) && ! empty( $imgs_matches[1] ) ) {
 			$img_ids = $imgs_matches[1];
@@ -486,9 +458,6 @@ class Hooks {
 			$img_ids[] = $lead_img;
 		}
 
-		error_log ('img_ids: ' . json_encode( $img_ids ) );
-		error_log ('chp_users: ' . json_encode( $chp_users ) );
-
 		if ( ! empty( $img_ids ) ) {
 			$args = array(
 				'post__in'            => $img_ids,
@@ -499,17 +468,12 @@ class Hooks {
 				'ignore_sticky_posts' => 1
 			);
 
-			error_log ('wp_query: ' . json_encode( $args ) );
-
 			$query = new \WP_Query( $args );
 
 			if ( $query->have_posts() ) {
 				$chp_images = $query->posts;
 			}
 		}
-
-		error_log ('chp_images: ' . json_encode( $chp_images ) );
-
 		return $chp_images;
 	}
 
