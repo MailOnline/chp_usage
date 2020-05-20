@@ -361,8 +361,8 @@ class Hooks {
 			'post_url'      => get_permalink( $post->ID ),
 			'post_title'    => $post->post_title,
 			'post_status'   => $post->post_status,
-			'post_publish'  => self::format_post_date( $post->post_date ),
-			'post_modified' => $post->post_modified,
+			'post_publish'  => self::format_post_date( $post->post_date_gmt ),
+			'post_modified' => self::format_post_date( $post->post_modified_gmt ),
 			'post_category' => $channels,
 			'post_author'   => implode( ',', $authors_names ),
 		];
@@ -394,7 +394,7 @@ class Hooks {
 			$coauthors = get_coauthors( $post_id );
 			foreach ( $coauthors as $author ) {
 				if ( array_key_exists( 'data', $author ) ) {
-					$data = new \stdClass();
+					$data                = new \stdClass();
 					$data->ID            = $author->data->ID;
 					$data->display_name  = $author->data->display_name;
 					$data->user_nicename = $author->data->user_nicename;
