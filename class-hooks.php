@@ -102,6 +102,10 @@ class Hooks {
 	 */
 	public function send_usage_to_chp( $post_id, $daily = false ) {
 
+		error_log ("send_usage_to_chp" );
+		error_log ("chp_endpoint $this->chp_endpoint" );
+		error_log ("chp_endpoint $this->auth_token" );
+
 		// Skip the chp call if the chp endpoint is not set
 		if ( ! $this->chp_endpoint ) {
 			return;
@@ -110,6 +114,10 @@ class Hooks {
 		$post = get_post( $post_id );
 
 		$chp_errors = 0;
+
+		if ( ! is_object( $post )  ) {
+			return;
+		}
 
 		$chp_images     = self::get_chp_images( $post );
 		$chp_images_ids = $this->get_images_meta( $post->ID );
@@ -563,4 +571,5 @@ class Hooks {
 
 }
 
-new Hooks();
+global $chp_hooks;
+$chp_hooks = new Hooks();
