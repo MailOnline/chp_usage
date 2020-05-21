@@ -457,7 +457,7 @@ class Hooks {
 
 		foreach ( $post_meta as $meta_key ) {
 			$meta_value = get_post_meta( $post->ID, $meta_key, true );
-			if ( $meta_value ) {
+			if ( ! empty( $meta_value ) ) {
 				$img_ids[] = $meta_value;
 			}
 		}
