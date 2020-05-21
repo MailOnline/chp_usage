@@ -446,16 +446,20 @@ class Hooks {
 			$img_ids[] = $thumb_img;
 		}
 
-		// get social image ID
-		$social_img = get_post_meta( $post->ID, 'social-img-id', true );
-		if ( $social_img ) {
-			$img_ids[] = $social_img;
-		}
+		// Array of meta keys used to store relevant infos about images set outside the post content
+		// e.g. social images,leading images etc etc
+		$post_meta = [
+			'social-img-id',
+			'leading-image-id',
+			'_yoast_wpseo_opengraph-image-id',
+			'_yoast_wpseo_twitter-image-id'
+		];
 
-		// get leading image iD
-		$lead_img = get_post_meta( $post->ID, 'leading-image-id', true );
-		if ( $lead_img ) {
-			$img_ids[] = $lead_img;
+		foreach ( $post_meta as $meta_key ) {
+			$meta_value = get_post_meta( $post->ID, $meta_key, true );
+			if ( ! empty( $meta_value ) ) {
+				$img_ids[] = $meta_value;
+			}
 		}
 
 		if ( ! empty( $img_ids ) ) {
@@ -474,6 +478,7 @@ class Hooks {
 				$chp_images = $query->posts;
 			}
 		}
+
 		return $chp_images;
 	}
 
