@@ -360,7 +360,7 @@ class Hooks {
 			'post_id'       => $post->ID,
 			'post_url'      => get_permalink( $post->ID ),
 			'post_title'    => $post->post_title,
-			'post_status'   => $post->post_status,
+			'post_status'   => self::format_post_status( $post->post_status ),
 			'post_publish'  => self::format_post_date( $post->post_date_gmt ),
 			'post_modified' => self::format_post_date( $post->post_modified_gmt ),
 			'post_category' => $channels,
@@ -377,6 +377,23 @@ class Hooks {
 	 */
 	function format_post_date( $post_date ) {
 		return date( 'Y-m-d\TH:i:s.000\Z', strtotime( $post_date ) );
+	}
+
+	/**
+	 * Convert wp post_status to the CHP standard (e.g publish = published)
+	 *
+	 * @param $post_status
+	 *
+	 * @return mixed
+	 */
+	function format_post_status( $post_status ) {
+		switch ($post_status):
+			case 'publish':
+				return 'published';
+				break;
+			default:
+				return $post_status;
+		endswitch;
 	}
 
 	/**
