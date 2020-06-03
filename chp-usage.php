@@ -3,7 +3,7 @@
  * Plugin Name: CHP usage
  * Plugin URI:  https://github.com/MailOnline/chp-usage/
  * Description: Connect to CHP and push the usage stats back to their systems
- * Version:     1.0.10
+ * Version:     1.0.11
  * Author:      Metro.co.uk
  * Author URI:  https://github.com/MailOnline/chp-usage/graphs/contributors
  * Text Domain: chp-usage

@@ -212,59 +212,65 @@ class Hooks {
 		if ( ! isset( $chp_images_ids[ $image_id ]['asset_id'] ) ) {
 
 			/*
+			 * Get the chp global id meta
+			 */
+			$chp_global_id = get_post_meta( $image_id, 'chp_global_id', true );
+
+			if ( $chp_global_id ) {
+				/*
 			 * CHP image names follow some rules (e.g. PRI_69815710.jpg, SEI_66230596-bbcf.jpg or SEC_66232132.jpg )
 			 * A few manipulations are needed in order to get the CHP ID
 			 */
-			$filename_exp_extension = explode( '.', basename( get_attached_file( $image_id ) ) );
-			$filename_exp_hyphen    = explode( '-', $filename_exp_extension[0] );
+				$filename_exp_extension = explode( '.', basename( get_attached_file( $image_id ) ) );
+				$filename_exp_hyphen    = explode( '-', $filename_exp_extension[0] );
 
-			// the XURN_ID we send to CHP must have a specific format (e.g. PRI*69815710, SEI*66230596 )
-			$xurn_id = str_replace( '_', '*', $filename_exp_hyphen[0] );
+				// the XURN_ID we send to CHP must have a specific format (e.g. PRI*69815710, SEI*66230596 )
+				$xurn_id = str_replace( '_', '*', $filename_exp_hyphen[0] );
 
-			/*
-			 * this parameter is different depending on the image type.
-			 * We get this info from the 3rd letter of the image name.
-			 * if it's a "c" the image is a compound.
-			 * SEC_66232132.jpg is a compound
-			 * PRI_69815710.jpg is a normal picture
-			 */
-			switch ( strtolower( $xurn_id[2] ) ) {
-				case 'c':
-					$from = 'Compound';
-					break;
-				default:
-					$from = 'Picture';
-					break;
-			}
+				/*
+				 * We need to check if the image is a simple picture or a compound.
+				 * Generally we get this info from the 3rd letter of the image name.
+				 * if it's a "c" the image is a compound
+				 * SEC_66232132.jpg is a compound
+				 * PRI_69815710.jpg is a normal picture
+				 * There is a race-condition in which some images don't have PRI/SEI or PRC/SEC in the filename.
+				 * The filename will look like this: DMGTCHPDCOMP000001299583 or DMGTCHPDPICT000509793198
+				 * 'DMGTCHPDCOMP' for compounds or 'DMGTCHPDPICT' for simple pictures
+				 */
 
-			$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__XURN=%27' . $xurn_id . '%27&includeRelationships=source';
+				$from = 'c' === strtolower( $xurn_id[2] ) || 'c' === strtolower( $xurn_id[8] ) ? 'Compound' : 'Picture';
 
-			$chp_query = $this->chp_endpoint . $query;
+				$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__GID=%27' . $chp_global_id . '%27&includeRelationships=source';
 
-			$response = wp_safe_remote_get(
-				$chp_query,
-				array(
-					'headers' => array(
-						'Authorization' => 'Basic ' . $this->auth_token,
-					),
-					'blocker' => false,
-				)
-			);
+				$chp_query = $this->chp_endpoint . $query;
 
-			if ( is_wp_error( $response ) ) {
-				$chp_images_ids[ $image_id ]['wp_error'] = $response;
-			}
+				$response = wp_safe_remote_get(
+					$chp_query,
+					array(
+						'headers' => array(
+							'Authorization' => 'Basic ' . $this->auth_token,
+						),
+						'blocker' => false,
+					)
+				);
 
-			$chp_images_ids[ $image_id ]['xurn_id'][ $xurn_id ]['status'] = wp_remote_retrieve_response_code( $response );
-
-			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-				$chp_response = wp_remote_retrieve_body( $response );
-				libxml_use_internal_errors( true );
-				$chp_xml = simplexml_load_string( $chp_response );
-				if ( false !== $chp_xml && isset( $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0] ) ) {
-					$asset_id                                = $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0];
-					$chp_images_ids[ $image_id ]['asset_id'] = (string) $asset_id;
+				if ( is_wp_error( $response ) ) {
+					$chp_images_ids[ $image_id ]['wp_error'] = $response;
 				}
+
+				$chp_images_ids[ $image_id ]['xurn_id'][ $xurn_id ]['status'] = wp_remote_retrieve_response_code( $response );
+
+				if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+					$chp_response = wp_remote_retrieve_body( $response );
+					libxml_use_internal_errors( true );
+					$chp_xml = simplexml_load_string( $chp_response );
+					if ( false !== $chp_xml && isset( $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0] ) ) {
+						$asset_id                                = $chp_xml->xpath( 'atom:entry/cmisra:object/cmis:properties/cmis:propertyId/cmis:value' )[0];
+						$chp_images_ids[ $image_id ]['asset_id'] = (string) $asset_id;
+					}
+				}
+			} else {
+				$chp_images_ids[ $image_id ]['error_gid'] = 'No CHP GID set';
 			}
 		}
 
