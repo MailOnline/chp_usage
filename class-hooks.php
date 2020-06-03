@@ -212,6 +212,11 @@ class Hooks {
 		if ( ! isset( $chp_images_ids[ $image_id ]['asset_id'] ) ) {
 
 			/*
+			 * Get the chp global id meta
+			 */
+			$chp_global_id = get_post_meta( $image_id, 'chp_global_id', true );
+
+			/*
 			 * CHP image names follow some rules (e.g. PRI_69815710.jpg, SEI_66230596-bbcf.jpg or SEC_66232132.jpg )
 			 * A few manipulations are needed in order to get the CHP ID
 			 */
@@ -222,22 +227,19 @@ class Hooks {
 			$xurn_id = str_replace( '_', '*', $filename_exp_hyphen[0] );
 
 			/*
-			 * this parameter is different depending on the image type.
-			 * We get this info from the 3rd letter of the image name.
-			 * if it's a "c" the image is a compound.
+			 * We need to check if the image is a simple picture or a compound.
+			 * Generally we get this info from the 3rd letter of the image name.
+			 * if it's a "c" the image is a compound
 			 * SEC_66232132.jpg is a compound
 			 * PRI_69815710.jpg is a normal picture
+			 * There is a race-condition in which some images don't have PRI/SEI or PRC/SEC in the filename.
+			 * The filename will look like this: DMGTCHPDCOMP000001299583 or DMGTCHPDPICT000509793198
+			 * 'DMGTCHPDCOMP' for compounds or 'DMGTCHPDPICT' for simple pictures
 			 */
-			switch ( strtolower( $xurn_id[2] ) ) {
-				case 'c':
-					$from = 'Compound';
-					break;
-				default:
-					$from = 'Picture';
-					break;
-			}
 
-			$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__XURN=%27' . $xurn_id . '%27&includeRelationships=source';
+			$from = 'c' === strtolower( $xurn_id[2] ) || 'c' === strtolower( $xurn_id[8] ) ? 'Compound' : 'Picture';
+
+			$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__GID=%27' . $chp_global_id . '%27&includeRelationships=source';
 
 			$chp_query = $this->chp_endpoint . $query;
 
