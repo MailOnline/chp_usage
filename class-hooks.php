@@ -240,7 +240,10 @@ class Hooks {
 
 				$from = 'c' === strtolower( $xurn_id[2] ) || 'c' === strtolower( $xurn_id[8] ) ? 'Compound' : 'Picture';
 
-				$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__GID=%27' . $chp_global_id . '%27&includeRelationships=source';
+				// Encode the GID to comply with the CHP requirements
+				$encoded_gid = str_replace('%5C', "%27", \urlencode(\addslashes($chp_global_id)));
+
+				$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__GID=%27' . $encoded_gid . '%27&includeRelationships=source';
 
 				$chp_query = $this->chp_endpoint . $query;
 
