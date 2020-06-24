@@ -116,6 +116,10 @@ class Hooks {
 			return;
 		}
 
+		if ( 'publish' !== $post->post_status ) {
+			return;
+		}
+
 		$chp_images     = self::get_chp_images( $post );
 		$chp_images_ids = $this->get_images_meta( $post->ID );
 
@@ -485,6 +489,14 @@ class Hooks {
 			$meta_value = get_post_meta( $post->ID, $meta_key, true );
 			if ( ! empty( $meta_value ) ) {
 				$img_ids[] = $meta_value;
+			}
+		}
+
+		// For each image found check if it's a metro composition
+		foreach ( $img_ids as $img_id ) {
+			$metro_image_comp = get_post_meta ( $img_id, 'metro_image_comp_source_id', false );
+			if ( $metro_image_comp ) {
+				$img_ids = array_merge( $metro_image_comp, $img_ids);
 			}
 		}
 
