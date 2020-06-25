@@ -492,13 +492,13 @@ class Hooks {
 		foreach ( $img_ids as $img_id ) {
 
 			$mdt_image_composition_source_id = get_post_meta ( $img_id, 'mdt_image_composition_source_id', false );
-			if ( $mdt_image_composition_source_id ) {
+			if ( is_array( $mdt_image_composition_source_id ) ) {
 				$img_ids = array_merge( $mdt_image_composition_source_id, $img_ids);
 			}
 
 			// Legacy code for old metro image compositions
 			$metro_image_comp_source_id = get_post_meta ( $img_id, 'metro_image_comp_source_id', false );
-			if ( $metro_image_comp_source_id ) {
+			if ( is_array( $metro_image_comp_source_id ) ) {
 				$img_ids = array_merge( $metro_image_comp_source_id, $img_ids);
 			}
 		}
