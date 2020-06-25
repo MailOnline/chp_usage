@@ -488,6 +488,21 @@ class Hooks {
 			}
 		}
 
+		// For each image found check if it's a composition created through the Image Compositions tool
+		foreach ( $img_ids as $img_id ) {
+
+			$mdt_image_composition_source_id = get_post_meta ( $img_id, 'mdt_image_composition_source_id', false );
+			if ( is_array( $mdt_image_composition_source_id ) ) {
+				$img_ids = array_merge( $mdt_image_composition_source_id, $img_ids);
+			}
+
+			// Legacy code for old metro image compositions
+			$metro_image_comp_source_id = get_post_meta ( $img_id, 'metro_image_comp_source_id', false );
+			if ( is_array( $metro_image_comp_source_id ) ) {
+				$img_ids = array_merge( $metro_image_comp_source_id, $img_ids);
+			}
+		}
+
 		if ( ! empty( $img_ids ) ) {
 			$args = array(
 				'post__in'            => $img_ids,
