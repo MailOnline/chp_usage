@@ -116,10 +116,6 @@ class Hooks {
 			return;
 		}
 
-		if ( 'publish' !== $post->post_status ) {
-			return;
-		}
-
 		$chp_images     = self::get_chp_images( $post );
 		$chp_images_ids = $this->get_images_meta( $post->ID );
 
@@ -492,7 +488,7 @@ class Hooks {
 			}
 		}
 
-		// For each image found check if it's a metro composition
+		// For each image found check if it's a composition created through the Image Compositions tool
 		foreach ( $img_ids as $img_id ) {
 
 			$mdt_image_composition_source_id = get_post_meta ( $img_id, 'mdt_image_composition_source_id', false );
