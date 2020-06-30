@@ -136,8 +136,13 @@ class Hooks {
 				continue;
 			}
 
-			// Perform a first request to get the CHP asset ID
+			// Perform the first request to get the CHP asset ID
 			$chp_images_ids = self::get_chp_asset_id( $chp_image->ID, $chp_images_ids );
+
+			// Perform a second request sending the XURN instead of the global id (sometimes there are encoding issues)
+			if ( !isset( $chp_images_ids[ $chp_image->ID ]['asset_id'] ) ) {
+				$chp_images_ids = self::get_chp_asset_id( $chp_image->ID, $chp_images_ids, true );
+			}
 
 			if ( isset( $chp_images_ids[ $chp_image->ID ]['asset_id'] ) ) {
 
@@ -207,7 +212,7 @@ class Hooks {
 	 *
 	 * @return mixed
 	 */
-	public function get_chp_asset_id( $image_id, $chp_images_ids ) {
+	public function get_chp_asset_id( $image_id, $chp_images_ids, $search_by_xurn = false ) {
 
 		if ( ! isset( $chp_images_ids[ $image_id ]['asset_id'] ) ) {
 
@@ -216,7 +221,7 @@ class Hooks {
 			 */
 			$chp_global_id = get_post_meta( $image_id, 'chp_global_id', true );
 
-			if ( $chp_global_id ) {
+			if ( $chp_global_id || $search_by_xurn ) {
 				/*
 			 * CHP image names follow some rules (e.g. PRI_69815710.jpg, SEI_66230596-bbcf.jpg or SEC_66232132.jpg )
 			 * A few manipulations are needed in order to get the CHP ID
@@ -240,10 +245,17 @@ class Hooks {
 
 				$from = 'c' === strtolower( $xurn_id[2] ) || 'c' === strtolower( $xurn_id[8] ) ? 'Compound' : 'Picture';
 
-				// Encode the GID to comply with the CHP requirements
-				$encoded_gid = str_replace('%5C', "%27", \urlencode(\addslashes($chp_global_id)));
+				if ( $search_by_xurn ) {
+					// Use the XURN instead
+					$chp_img_id =  $xurn_id;
+					$get_param = 'otex__DMG_INFO__XURN';
+				} else {
+					// Encode the GID to comply with the CHP requirements
+					$chp_img_id = str_replace('%5C', "%27", \urlencode(\addslashes($chp_global_id)));
+					$get_param = 'otex__DMG_INFO__GID';
+				}
 
-				$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20otex__DMG_INFO__GID=%27' . $encoded_gid . '%27&includeRelationships=source';
+				$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20' . $get_param . '=%27' . $chp_img_id . '%27&includeRelationships=source';
 
 				$chp_query = $this->chp_endpoint . $query;
 
