@@ -15,7 +15,7 @@ class Hooks {
 	const CHP_DAILY_CRON = 'daily_retry_chp_calls';
 	const MAX_RETRIES = 4;
 
-	private $chp_endpoint, $auth_token, $slack_url, $slack_channel, $mustache;
+	private $chp_endpoint, $auth_token, $slack_url, $slack_channel, $enabled_post_types, $mustache;
 
 	/**
 	 * Hooks constructor.
@@ -23,6 +23,7 @@ class Hooks {
 	function __construct() {
 		$this->chp_endpoint = get_option( Settings::CHP_URL );
 		$this->auth_token   = base64_encode( get_option( Settings::CHP_TOKEN ) . ':' );
+		$this->enabled_post_types = get_option( Settings::ENABLED_POST_TYPES );
 		$this->slack_url    = get_option( Settings::SLACK_APP_URL );
 		$this->slack_channel = get_option( Settings::SLACK_CHANNEL );
 
@@ -70,7 +71,10 @@ class Hooks {
 	 */
 	function save_post_action( $new_status, $old_status, $post ) {
 
-		if ( 'post' !== get_post_type( $post->ID ) ) {
+		if ( !is_array( $this->enabled_post_types ) ) {
+			return;
+		}
+		if ( is_array( $this->enabled_post_types ) && !in_array( get_post_type( $post->ID ), $this->enabled_post_types, true ) ) {
 			return;
 		}
 		if ( wp_is_post_revision( $post->ID ) ) {
@@ -554,13 +558,17 @@ class Hooks {
 	 */
 	function retry_chp_calls_daily() {
 
+		if ( !is_array ( $this->enabled_post_types ) ) {
+			return;
+		}
+
 		$paged = 1;
 
 		do {
 
 			$query = new \WP_Query(
 				array(
-					'post_type'      => 'post',
+					'post_type'      => $this->enabled_post_types,
 					'post_status'    => 'publish',
 					'posts_per_page' => 100,
 					'paged'          => $paged,
