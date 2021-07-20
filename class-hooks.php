@@ -13,10 +13,9 @@ class Hooks {
 
 	const CHP_CRON = 'retry_chp_call';
 	const CHP_DAILY_CRON = 'daily_retry_chp_calls';
-	const SLACK_CHANNEL = '#chp-notifications';
 	const MAX_RETRIES = 4;
 
-	private $chp_endpoint, $auth_token, $slack_url, $mustache;
+	private $chp_endpoint, $auth_token, $slack_url, $slack_channel, $mustache;
 
 	/**
 	 * Hooks constructor.
@@ -25,6 +24,7 @@ class Hooks {
 		$this->chp_endpoint = get_option( Settings::CHP_URL );
 		$this->auth_token   = base64_encode( get_option( Settings::CHP_TOKEN ) . ':' );
 		$this->slack_url    = get_option( Settings::SLACK_APP_URL );
+		$this->slack_channel = get_option( Settings::SLACK_CHANNEL );
 
 		// Get the mustache template set in settings
 		$template_xml = get_option( Settings::CHP_XML_TEMPLATE );
@@ -325,13 +325,17 @@ class Hooks {
 	 */
 	public function send_slack_notification( $post, $cph_error_log, $image_id, $response ) {
 
+		if ( !$this->slack_url || !$this->slack_channel ) {
+			return;
+		}
+
 		$post_url = get_permalink( $post->ID );
 
 		$message = sprintf( 'CHP error: <%s|%s> - %s - IMG ID: %d ', trim( $post_url ), trim( $post->post_title ), $cph_error_log, $image_id );
 		$message .= wp_json_encode( $response );
 
 		$payload = array(
-			'channel'    => self::SLACK_CHANNEL,
+			'channel'    => $this->slack_channel,
 			'icon_emoji' => ':-1:',
 			'username'   => 'chpbot',
 			'text'       => $message,
