@@ -12,6 +12,9 @@ class CHP_WP_CLI extends WPCOM_VIP_CLI_Command {
 	/**
 	 * Subcommand to send the usage to chp for a specific post id
 	 *
+	 * @param $args
+	 * @param $assoc_args
+	 *
 	 * @since 3.0
 	 *
 	 * @subcommand send_chp_usage

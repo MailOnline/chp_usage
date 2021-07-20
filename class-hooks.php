@@ -209,6 +209,7 @@ class Hooks {
 	 *
 	 * @param $image_id
 	 * @param $chp_images_ids
+	 * @param bool $search_by_xurn
 	 *
 	 * @return mixed
 	 */
