@@ -16,7 +16,9 @@ class Settings {
 	const CHP_TOKEN = 'chp_usage_token';
 	const CHP_USERS = 'chp_usage_users';
 	const CHP_XML_TEMPLATE = 'chp_usage_xml_template';
+	const ENABLED_POST_TYPES = 'enabled_post_types';
 	const SLACK_APP_URL = 'slack_app_url';
+	const SLACK_CHANNEL = 'slack_channel';
 
 	/**
 	 * Hooks constructor
@@ -74,7 +76,9 @@ class Settings {
 		self::register_setting( self::CHP_TOKEN, 'CHP TOKEN' );
 		self::register_setting( self::CHP_USERS, 'CHP users', 'IDs Comma separated used to detect CHP images.' );
 		self::register_setting( self::CHP_XML_TEMPLATE, 'CHP XML TEMPLATE', '', 'field_textarea' );
+		self::register_setting( self::ENABLED_POST_TYPES, 'Enable Post Types', '', 'field_checkbox' );
 		self::register_setting( self::SLACK_APP_URL, 'SLACK APP URL' );
+		self::register_setting( self::SLACK_CHANNEL, 'SLACK CHANNEL' );
 		self::register_setting( 'ip_address', 'IP address', '', 'display_the_ip' );
 
 	}
@@ -127,6 +131,25 @@ class Settings {
 		}
 	}
 
+	/**
+	 * Generate the checkbox field
+	 *
+	 * @param $args
+	 */
+	public static function field_checkbox( $args ) {
+		$meta_value = get_option( $args[0] );
+        $post_types = array_keys( get_post_types() );
+
+		foreach ($post_types as $key ) {
+
+			$checked = in_array( $key, $meta_value ) ? "checked=\"checked\"" : "";
+
+			printf( '<div><input type="checkbox" name="%s[]" id="%s[%s]" value="%s" %s><label for="%s[%s]">%s</label></div>',
+				esc_attr( $args[0] ), esc_attr( $args[0] ), esc_attr( $key ), esc_attr( $key ), $checked, esc_attr( $args[0] ), esc_attr( $key ), esc_html( $key ) );
+
+		}
+	}
+
 	public static function chp_global_id_meta_init() {
 		register_meta(
 			'post',
@@ -144,7 +167,7 @@ class Settings {
 	 */
 	public static function display_the_ip() {
 		$curl     = new \WP_Http_Curl();
-		$response = $curl->request( 'https://ifconfig.me/' );
+		$response = @$curl->request( 'https://ifconfig.me/' );
 		if ( ! is_wp_error( $response ) && isset ( $response["body"] ) ) {
 			echo esc_html( $response["body"] );
 		}
@@ -167,4 +190,3 @@ class Settings {
 }
 
 new Settings();
-
