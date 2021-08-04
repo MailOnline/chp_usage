@@ -142,7 +142,7 @@ class Settings {
 
 		foreach ( $post_types as $key ) {
 
-			$checked = ( is_array( $option_value ) && in_array( $key, $option_value ) ) ? "checked=\"checked\"" : "";
+			$checked = ( is_array( $option_value ) && in_array( $key, $option_value, true ) ) ? "checked=\"checked\"" : "";
 
 			printf( '<div><input type="checkbox" name="%s[]" id="%s[%s]" value="%s" %s><label for="%s[%s]">%s</label></div>',
 				esc_attr( $args[0] ), esc_attr( $args[0] ), esc_attr( $key ), esc_attr( $key ), $checked, esc_attr( $args[0] ), esc_attr( $key ), esc_html( $key ) );
