@@ -137,12 +137,12 @@ class Settings {
 	 * @param $args
 	 */
 	public static function field_checkbox( $args ) {
-		$meta_value = get_option( $args[0] );
-        $post_types = array_keys( get_post_types() );
+		$option_value = get_option( $args[0] );
+		$post_types = array_keys( get_post_types() );
 
-		foreach ($post_types as $key ) {
+		foreach ( $post_types as $key ) {
 
-			$checked = in_array( $key, $meta_value ) ? "checked=\"checked\"" : "";
+			$checked = ( is_array( $option_value ) && in_array( $key, $option_value, true ) ) ? "checked=\"checked\"" : "";
 
 			printf( '<div><input type="checkbox" name="%s[]" id="%s[%s]" value="%s" %s><label for="%s[%s]">%s</label></div>',
 				esc_attr( $args[0] ), esc_attr( $args[0] ), esc_attr( $key ), esc_attr( $key ), $checked, esc_attr( $args[0] ), esc_attr( $key ), esc_html( $key ) );
