@@ -5,8 +5,8 @@
   "type"       : "wordpress-plugin",
   "license": "proprietary",
   "require": {
-    "mnsami/composer-custom-directory-installer": "1.1.*",
-    "mustache/mustache": "^2.13"
+    "mnsami/composer-custom-directory-installer": "2.0.*",
+    "mustache/mustache": "^2.14"
   },
   "minimum-stability": "stable",
   "extra": {
