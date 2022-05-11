@@ -451,6 +451,10 @@ class Hooks {
 					$authors[] = $author;
 				}
 			}
+		} else {
+			$author_id = get_post_field( 'post_author', $post_id );
+			$author = get_userdata($author_id);
+			$authors[] = $author;
 		}
 
 		return $authors;
