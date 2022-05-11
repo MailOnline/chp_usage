@@ -159,7 +159,7 @@ class Hooks {
 					$this->chp_endpoint . 'children',
 					array(
 						'headers' => array(
-							'Content-Type'  => 'text/xml',
+							'Content-Type'  => 'text/plain',
 							'Authorization' => 'Basic ' . $this->auth_token,
 						),
 						'body'    => $xml_string,
