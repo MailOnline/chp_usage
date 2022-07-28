@@ -440,7 +440,7 @@ class Hooks {
 		if ( function_exists( 'get_coauthors' ) ) {
 			$coauthors = get_coauthors( $post_id );
 			foreach ( $coauthors as $author ) {
-				if ( array_key_exists( 'data', $author ) ) {
+				if ( is_array( $author ) && array_key_exists( 'data', $author ) ) {
 					$data                = new \stdClass();
 					$data->ID            = $author->data->ID;
 					$data->display_name  = $author->data->display_name;
