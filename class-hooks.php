@@ -15,17 +15,18 @@ class Hooks {
 	const CHP_DAILY_CRON = 'daily_retry_chp_calls';
 	const MAX_RETRIES = 4;
 
-	private $chp_endpoint, $auth_token, $slack_url, $slack_channel, $enabled_post_types, $mustache;
+	private $chp_endpoint, $auth_token, $site_url, $slack_url, $slack_channel, $enabled_post_types, $mustache;
 
 	/**
 	 * Hooks constructor.
 	 */
 	function __construct() {
-		$this->chp_endpoint = get_option( Settings::CHP_URL );
-		$this->auth_token   = base64_encode( get_option( Settings::CHP_TOKEN ) . ':' );
+		$this->chp_endpoint       = get_option( Settings::CHP_URL );
+		$this->auth_token         = base64_encode( get_option( Settings::CHP_TOKEN ) . ':' );
 		$this->enabled_post_types = get_option( Settings::ENABLED_POST_TYPES );
-		$this->slack_url    = get_option( Settings::SLACK_APP_URL );
-		$this->slack_channel = get_option( Settings::SLACK_CHANNEL );
+		$this->site_url           = get_option( Settings::FE_SITE_URL );
+		$this->slack_url          = get_option( Settings::SLACK_APP_URL );
+		$this->slack_channel      = get_option( Settings::SLACK_CHANNEL );
 
 		// Get the mustache template set in settings
 		$template_xml = get_option( Settings::CHP_XML_TEMPLATE );
@@ -71,10 +72,10 @@ class Hooks {
 	 */
 	function save_post_action( $new_status, $old_status, $post ) {
 
-		if ( !is_array( $this->enabled_post_types ) ) {
+		if ( ! is_array( $this->enabled_post_types ) ) {
 			return;
 		}
-		if ( is_array( $this->enabled_post_types ) && !in_array( get_post_type( $post->ID ), $this->enabled_post_types, true ) ) {
+		if ( is_array( $this->enabled_post_types ) && ! in_array( get_post_type( $post->ID ), $this->enabled_post_types, true ) ) {
 			return;
 		}
 		if ( wp_is_post_revision( $post->ID ) ) {
@@ -144,7 +145,7 @@ class Hooks {
 			$chp_images_ids = self::get_chp_asset_id( $chp_image->ID, $chp_images_ids );
 
 			// Perform a second request sending the XURN instead of the global id (sometimes there are encoding issues)
-			if ( !isset( $chp_images_ids[ $chp_image->ID ]['asset_id'] ) ) {
+			if ( ! isset( $chp_images_ids[ $chp_image->ID ]['asset_id'] ) ) {
 				$chp_images_ids = self::get_chp_asset_id( $chp_image->ID, $chp_images_ids, true );
 			}
 
@@ -252,12 +253,12 @@ class Hooks {
 
 				if ( $search_by_xurn ) {
 					// Use the XURN instead
-					$chp_img_id =  $xurn_id;
-					$get_param = 'otex__DMG_INFO__XURN';
+					$chp_img_id = $xurn_id;
+					$get_param  = 'otex__DMG_INFO__XURN';
 				} else {
 					// Encode the GID to comply with the CHP requirements
-					$chp_img_id = str_replace('%5C', "%27", \urlencode(\addslashes($chp_global_id)));
-					$get_param = 'otex__DMG_INFO__GID';
+					$chp_img_id = str_replace( '%5C', "%27", \urlencode( \addslashes( $chp_global_id ) ) );
+					$get_param  = 'otex__DMG_INFO__GID';
 				}
 
 				$query = 'query?q=SELECT%20cmis:objectId%20FROM%20' . $from . '%20WHERE%20' . $get_param . '=%27' . $chp_img_id . '%27&includeRelationships=source';
@@ -330,7 +331,7 @@ class Hooks {
 	 */
 	public function send_slack_notification( $post, $cph_error_log, $image_id, $response ) {
 
-		if ( !$this->slack_url || !$this->slack_channel ) {
+		if ( ! $this->slack_url || ! $this->slack_channel ) {
 			return;
 		}
 
@@ -385,10 +386,16 @@ class Hooks {
 
 		}
 
+		$post_url = get_permalink( $post->ID );
+
+		if ( $this->site_url ) {
+			$post_url = str_replace( get_home_url( null, '/' ), $this->site_url, $post_url );
+		}
+
 		return [
 			'asset_id'      => strtoupper( $asset_id ),
 			'post_id'       => $post->ID,
-			'post_url'      => get_permalink( $post->ID ),
+			'post_url'      => $post_url,
 			'post_title'    => $post->post_title,
 			'post_status'   => self::format_post_status( $post->post_status ),
 			'post_publish'  => self::format_post_date( $post->post_date_gmt ),
@@ -417,7 +424,7 @@ class Hooks {
 	 * @return mixed
 	 */
 	function format_post_status( $post_status ) {
-		switch ($post_status):
+		switch ( $post_status ):
 			case 'publish':
 				return 'published';
 				break;
@@ -453,7 +460,7 @@ class Hooks {
 			}
 		} else {
 			$author_id = get_post_field( 'post_author', $post_id );
-			$author = get_userdata($author_id);
+			$author    = get_userdata( $author_id );
 			$authors[] = $author;
 		}
 
@@ -516,15 +523,15 @@ class Hooks {
 		// For each image found check if it's a composition created through the Image Compositions tool
 		foreach ( $img_ids as $img_id ) {
 
-			$mdt_image_composition_source_id = get_post_meta ( $img_id, 'mdt_image_composition_source_id', false );
+			$mdt_image_composition_source_id = get_post_meta( $img_id, 'mdt_image_composition_source_id', false );
 			if ( is_array( $mdt_image_composition_source_id ) ) {
-				$img_ids = array_merge( $mdt_image_composition_source_id, $img_ids);
+				$img_ids = array_merge( $mdt_image_composition_source_id, $img_ids );
 			}
 
 			// Legacy code for old metro image compositions
-			$metro_image_comp_source_id = get_post_meta ( $img_id, 'metro_image_comp_source_id', false );
+			$metro_image_comp_source_id = get_post_meta( $img_id, 'metro_image_comp_source_id', false );
 			if ( is_array( $metro_image_comp_source_id ) ) {
-				$img_ids = array_merge( $metro_image_comp_source_id, $img_ids);
+				$img_ids = array_merge( $metro_image_comp_source_id, $img_ids );
 			}
 		}
 
@@ -562,7 +569,7 @@ class Hooks {
 	 */
 	function retry_chp_calls_daily() {
 
-		if ( !is_array ( $this->enabled_post_types ) ) {
+		if ( ! is_array( $this->enabled_post_types ) ) {
 			return;
 		}
 

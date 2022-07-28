@@ -16,6 +16,7 @@ class Settings {
 	const CHP_TOKEN = 'chp_usage_token';
 	const CHP_USERS = 'chp_usage_users';
 	const CHP_XML_TEMPLATE = 'chp_usage_xml_template';
+	const FE_SITE_URL = 'fe_site_url';
 	const ENABLED_POST_TYPES = 'enabled_post_types';
 	const SLACK_APP_URL = 'slack_app_url';
 	const SLACK_CHANNEL = 'slack_channel';
@@ -77,6 +78,7 @@ class Settings {
 		self::register_setting( self::CHP_USERS, 'CHP users', 'IDs Comma separated used to detect CHP images.' );
 		self::register_setting( self::CHP_XML_TEMPLATE, 'CHP XML TEMPLATE', '', 'field_textarea' );
 		self::register_setting( self::ENABLED_POST_TYPES, 'Enable Post Types', '', 'field_checkbox' );
+		self::register_setting( self::FE_SITE_URL, 'SITE URL', 'Replace the default WordPress URL with a different one on URL sent to CHP.' );
 		self::register_setting( self::SLACK_APP_URL, 'SLACK APP URL' );
 		self::register_setting( self::SLACK_CHANNEL, 'SLACK CHANNEL' );
 		self::register_setting( 'ip_address', 'IP address', '', 'display_the_ip' );
@@ -138,7 +140,7 @@ class Settings {
 	 */
 	public static function field_checkbox( $args ) {
 		$option_value = get_option( $args[0] );
-		$post_types = array_keys( get_post_types() );
+		$post_types   = array_keys( get_post_types() );
 
 		foreach ( $post_types as $key ) {
 
