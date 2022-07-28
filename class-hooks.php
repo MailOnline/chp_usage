@@ -388,7 +388,7 @@ class Hooks {
 
 		$post_url = get_permalink( $post->ID );
 
-		if ( $this->site_url ) {
+		if ( ! empty( $this->site_url ) ) {
 			$post_url = str_replace( get_home_url( null, '/' ), $this->site_url, $post_url );
 		}
 
