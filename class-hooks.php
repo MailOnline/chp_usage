@@ -13,9 +13,10 @@ class Hooks {
 
 	const CHP_CRON = 'retry_chp_call';
 	const CHP_DAILY_CRON = 'daily_retry_chp_calls';
+	const CHP_DAILY_MEDIA_CLEANUP_CRON = 'daily_media_cleanup';
 	const MAX_RETRIES = 4;
 
-	private $chp_endpoint, $auth_token, $site_url, $slack_url, $slack_channel, $enabled_post_types, $mustache;
+	private $chp_endpoint, $auth_token, $chp_users, $site_url, $slack_url, $slack_channel, $enabled_post_types, $mustache;
 
 	/**
 	 * Hooks constructor.
@@ -23,6 +24,7 @@ class Hooks {
 	function __construct() {
 		$this->chp_endpoint       = get_option( Settings::CHP_URL );
 		$this->auth_token         = base64_encode( get_option( Settings::CHP_TOKEN ) . ':' );
+		$this->chp_users          = get_option( Settings::CHP_USERS );
 		$this->enabled_post_types = get_option( Settings::ENABLED_POST_TYPES );
 		$this->site_url           = get_option( Settings::FE_SITE_URL );
 		$this->slack_url          = get_option( Settings::SLACK_APP_URL );
@@ -60,6 +62,10 @@ class Hooks {
 			$timestamp = wp_next_scheduled( self::CHP_DAILY_CRON );
 			wp_unschedule_event( $timestamp, self::CHP_DAILY_CRON );
 		}
+
+		// set a daily cron job to hide unused CHP images
+		add_action( 'admin_init', [ $this, 'activate_chp_daily_cleanup_cron' ] );
+		add_action( self::CHP_DAILY_MEDIA_CLEANUP_CRON, [ $this, 'chp_media_cleanup' ], 10, 1 );
 
 	}
 
@@ -479,7 +485,7 @@ class Hooks {
 		$img_ids    = [];
 		$chp_images = [];
 
-		$chp_users = explode( ',', get_option( Settings::CHP_USERS ) );
+		$chp_users = explode( ',', $this->chp_users );
 
 		// Single images IDs
 		preg_match_all( '/wp-image-(\d+)/m', $post->post_content, $imgs_matches );
@@ -620,8 +626,119 @@ class Hooks {
 		// Add cron jobs to whitelist
 		$whitelist[] = self::CHP_CRON;
 		$whitelist[] = self::CHP_DAILY_CRON;
+		$whitelist[] = self::CHP_DAILY_MEDIA_CLEANUP_CRON;
 
 		return $whitelist;
+	}
+
+	/**
+	 * Schedule a daily cron job to hide unused CHP images
+	 */
+	function activate_chp_daily_cleanup_cron() {
+		if ( ! wp_next_scheduled( self::CHP_DAILY_MEDIA_CLEANUP_CRON ) ) {
+			wp_schedule_event( time(), 'daily', self::CHP_DAILY_MEDIA_CLEANUP_CRON );
+		}
+	}
+
+	/**
+	 * Callback for the daily cron job
+	 */
+	function chp_media_cleanup() {
+		global $wpdb;
+
+		$date = '-60 days';
+
+		$chp_users = $this->chp_users ? explode( ',', $this->chp_users ) : [];
+
+		if ( empty ( $chp_users ) ) {
+			return;
+		}
+
+		// Pagination arguments
+		$posts_per_page = 100;
+		$page           = 1;
+		$date     = strtotime( $date );
+
+		do {
+
+			$query_args = [
+				'paged'          => $page,
+				'post_status'    => 'inherit',
+				'post_type'      => 'attachment',
+				'author__in'     => $chp_users,
+				'posts_per_page' => $posts_per_page,
+				'order'          => 'ASC',
+				'date_query'     => [
+					'year'  => gmdate( 'Y', $date ),
+					'month' => gmdate( 'm', $date ),
+					'day'   => gmdate( 'd', $date ),
+				],
+			];
+
+			$posts = new \WP_Query( $query_args );
+
+			if ( $posts->have_posts() ) {
+
+				foreach ( $posts->posts as $post ) {
+
+					$hide = false;
+
+					$chp_global_id = get_metadata( 'post', $post->ID, 'chp_global_id', true );
+
+					// Always hide CHP media without a global CHP ID set
+					if ( empty ( $chp_global_id ) ) {
+						$hide = true;
+					}
+
+					// Last ditch DB query to see if it exists anywhere in post_meta
+					$in_meta = $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_value = %d AND meta_key IN ('_thumbnail_id','_wp_attached_file','social-img-id','leading-image-id','_yoast_wpseo_opengraph-image-id','_yoast_wpseo_twitter-image-id')", $post->ID ) );
+					if ( ! empty( $in_meta ) && ! $hide ) {
+						continue;
+					}
+
+					// Search for image media url in WP_Post content
+					$media_url    = $post->guid;
+					$post_content = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND post_type IN ('post', 'page') AND post_content LIKE %s", '%' . $wpdb->esc_like( $media_url ) . '%' ) );
+					if ( ! empty( $post_content ) && ! $hide ) {
+						continue;
+					}
+
+					// Search for image url in postmeta
+					$post_meta = $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_value LIKE %s AND meta_key IN ('_thumbnail_id','_wp_attached_file','social-img-id','leading-image-id','_yoast_wpseo_opengraph-image-id','_yoast_wpseo_twitter-image-id')", '%' . $wpdb->esc_like( $media_url ) . '%' ) );
+					if ( ! empty( $post_meta ) && ! $hide ) {
+						continue;
+					}
+
+					// Search for image ID in WP_Post content
+					$post_content = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_status='publish' AND post_type IN ('post', 'page') AND post_content LIKE %s", '%wp-image-' . $wpdb->esc_like( $post->ID ) . '%' ) );
+					if ( ! empty( $post_content ) && ! $hide ) {
+						continue;
+					}
+
+					if ( ! $hide ) {
+						$hide = true;
+					}
+
+					if ( $hide ) {
+						$data = array(
+							'ID'          => $post->ID,
+							'post_status' => 'private',
+						);
+
+						wp_update_post( $data );
+
+					}
+
+				}
+			}
+
+			// Increase the page count
+			$page ++;
+
+			sleep( 1 );
+
+		} while ( count( $posts->posts ) );
+
 	}
 
 }

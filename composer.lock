@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a0bb72ef6699b4048f67bfd10ed15a11",
+    "content-hash": "3506cb22c5761d46b5ace22531d2306e",
     "packages": [
         {
             "name": "mnsami/composer-custom-directory-installer",
@@ -121,5 +121,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.3.0"
 }

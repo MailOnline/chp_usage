@@ -4,7 +4,7 @@
   "homepage"   : "https://github.com/MailOnline/chp-usage/",
   "type"       : "wordpress-plugin",
   "license": "proprietary",
-  "version" : "1.0.21",
+  "version" : "1.0.22",
   "require": {
     "mnsami/composer-custom-directory-installer": "2.0.*",
     "mustache/mustache": "^2.14"
@@ -15,6 +15,11 @@
       "lib/{$name}/": [
         "mustache/mustache"
       ]
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "mnsami/composer-custom-directory-installer": true
     }
   }
 }
